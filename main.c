@@ -12,6 +12,7 @@ extern int errno;
 
 #define MAX_LINE 80
 #define MAX_COMMANDS 20
+#define MAX_BUF 2048
 
 char current_path[200];
 
@@ -94,7 +95,6 @@ void print_tokens(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, in
 }
 
 void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
-    
     if(strcmp("cd", args[0][0]) == 0){
         if(chdir(args[0][1]) == -1){
             printf("ERROR: chdir failed\n");
@@ -120,13 +120,39 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         printf("ERROR: exec failed\n");
                         exit(1);
                     }
-                    close(fd);
-                    unlink(args[1][0]);
                 }
                 else{
-                    if(execvp(args[0][0], args[0]) < 0){
-                        printf("ERROR: exec failed\n");
-                        exit(1);
+                    if(num_commands == 2){
+                        pid_t pid2;
+                        if((pid2 = fork()) < 0){
+                            fprintf(stderr, "ERROR: fork failed\n");
+                            exit(1);
+                        }
+                        else{
+                            if(pid2 == 0){
+                                args[1][commands_args_size[1]] = "/tmp/process_output";
+                                args[1][commands_args_size[1] + 1] = NULL;
+                                if(execvp(args[1][0], args[1]) < 0){
+                                    printf("ERROR: exec failed\n");
+                                    exit(1);
+                                }
+                            }
+                            else{
+                                mkfifo("/tmp/process_output", 0666);
+                                int fd = open("/tmp/process_output", O_RDWR | O_CREAT);
+                                dup2(fd, STDOUT_FILENO);
+                                if(execvp(args[0][0], args[0]) < 0){
+                                    printf("ERROR: exec failed\n");
+                                    exit(1);
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        if(execvp(args[0][0], args[0]) < 0){
+                            printf("ERROR: exec failed\n");
+                            exit(1);
+                        }
                     }
                 }
             }
@@ -161,7 +187,7 @@ void main(){
             int is_outbound_redirection[MAX_COMMANDS] = {0};
             int should_run_in_background[MAX_COMMANDS] = {0};
             get_tokens(buffer, num_characters, args, &num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
-            print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
+            //print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             execute(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             //printf("%d\n", getppid());
         }
