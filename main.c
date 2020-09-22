@@ -94,9 +94,9 @@ void print_tokens(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, in
     printf("\n");
 }
 
-void write_command_in_history_file(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
+void write_command_in_history_file(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS], char *file_name){
     FILE *fp;
-    fp = fopen("history.txt", "a");
+    fp = fopen(file_name, "a");
     for(int i = 0; i < num_commands; i++){
         for(int j = 0; j < commands_args_size[i]; j++){
             //fprintf(fp, "%s ", args[i][j]);
@@ -138,11 +138,34 @@ void print_file_content(char *file_name){
    fclose(fp);
 }
 
+void get_last_line(char *file_name, char *buffer){
+    FILE *fp;
+
+    fp = fopen(file_name, "r");
+    while(!feof(fp))
+        fgets(buffer, MAX_LINE, fp);
+    buffer[strlen(buffer) - 2] = '\0';
+}
+
 void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
     if(strcmp("cd", args[0][0]) == 0){
         if(chdir(args[0][1]) == -1){
             printf("ERROR: chdir failed\n");
         }
+    }
+    else if(strcmp("!!", args[0][0]) == 0){
+        char *buffer;
+        buffer = (char*)malloc(MAX_LINE * sizeof(char));
+        buffer[0] = '\0';
+        get_last_line("history.txt", buffer);
+        
+        //Parse the command and execute it
+        int num_characters = (int)strlen(buffer);
+        num_commands = 0;
+        commands_args_size[0] = 0; is_outbound_redirection[0] = 0; should_run_in_background[0] = 0;
+        get_tokens(buffer, num_characters, args, &num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
+        //print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
+        execute(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
     }
     else{
         pid_t pid, pid2;
@@ -254,7 +277,9 @@ void main(){
             int should_run_in_background[MAX_COMMANDS] = {0};
             get_tokens(buffer, num_characters, args, &num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             //print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
-            write_command_in_history_file(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
+            if(!(strcmp("!!", buffer) == 0)){
+                write_command_in_history_file(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background, "history.txt");   
+            }
             execute(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
         }
     }
