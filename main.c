@@ -12,7 +12,7 @@ extern int errno;
 
 #define MAX_LINE 80
 #define MAX_COMMANDS 20
-#define MAX_BUF 2048
+#define MAX_COMMAND_OUTPUT_BUFFER_SIZE 8192
 
 char current_path[200];
 
@@ -145,7 +145,9 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
         }
     }
     else{
-        pid_t pid, pid2, fd;
+        pid_t pid, pid2;
+        int a[2], b[2], readbytes;
+        char buffer[MAX_COMMAND_OUTPUT_BUFFER_SIZE];
         if((pid = fork()) < 0){
             fprintf(stderr, "ERROR: fork failed\n");
             exit(1);
@@ -158,7 +160,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         exit(1);
                     }
                     mkfifo(args[1][0], 0666);
-                    fd = open(args[1][0], O_RDWR | O_CREAT);
+                    int fd = open(args[1][0], O_RDWR | O_CREAT);
                     dup2(fd, STDOUT_FILENO);
                     if(strcmp("history", args[0][0]) == 0){
                         print_file_content("history.txt");
@@ -173,23 +175,24 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                 }
                 else{
                     if(num_commands == 2){
+                        pipe(a);
+                        pipe(b);
                         if((pid2 = fork()) < 0){
                             fprintf(stderr, "ERROR: fork failed\n");
                             exit(1);
                         }
                         else{
                             if(pid2 == 0){
-                                args[1][commands_args_size[1]] = "/tmp/process_output.txt";
-                                args[1][commands_args_size[1] + 1] = NULL;
+                                dup2(a[0], STDIN_FILENO);
                                 if(execvp(args[1][0], args[1]) < 0){
                                     printf("ERROR: exec failed\n");
                                     exit(1);
                                 }
                             }
                             else{
-                                mkfifo("/tmp/process_output.txt", 0666);
-                                fd = open("/tmp/process_output.txt", O_RDWR | O_CREAT);
-                                dup2(fd, STDOUT_FILENO);
+                                close(a[0]); /* Cerramos la lectura para el proceso hijo */
+                                close(b[1]); /* Cerramos la escritura para el proceso hijo */
+                                dup2(a[1], STDOUT_FILENO);
                                 if(strcmp("history", args[0][0]) == 0){
                                     print_file_content("history.txt");
                                     exit(1);

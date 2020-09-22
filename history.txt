@@ -1,0 +1,17 @@
+ls 
+ls | grep hola 
+ls 
+ps aux | grep grep 
+ls 
+ls 
+ls | grep .c 
+grep .c 
+history 
+history | ls 
+history 
+history | c 
+history | grep .c 
+ls -a 
+ls  
+ls 
+ls > output.txt 
