@@ -15,3 +15,7 @@ ls -a
 ls  
 ls 
 ls > output.txt 
+ls 
+ps aux > output.txt 
+ls > output.txt 
+ps aux > output.txt 

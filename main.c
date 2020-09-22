@@ -159,8 +159,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         printf("ERROR: You must introduce a file name\n");
                         exit(1);
                     }
-                    mkfifo(args[1][0], 0666);
-                    int fd = open(args[1][0], O_RDWR | O_CREAT);
+                    int fd = open(args[1][0], O_CREAT | O_WRONLY | O_TRUNC, 0644);
                     dup2(fd, STDOUT_FILENO);
                     if(strcmp("history", args[0][0]) == 0){
                         print_file_content("history.txt");
