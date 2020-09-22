@@ -14,7 +14,8 @@ extern int errno;
 #define MAX_COMMANDS 20
 #define MAX_COMMAND_OUTPUT_BUFFER_SIZE 8192
 
-char current_path[200];
+char current_path[500];
+char history_file_path[500];
 
 void get_tokens(char *buffer, int num_characters, char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int *num_command, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
     int i = 0, j = 0;
@@ -157,7 +158,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
         char *buffer;
         buffer = (char*)malloc(MAX_LINE * sizeof(char));
         buffer[0] = '\0';
-        get_last_line("history.txt", buffer);
+        get_last_line(history_file_path, buffer);
         
         //Parse the command and execute it
         int num_characters = (int)strlen(buffer);
@@ -185,7 +186,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                     int fd = open(args[1][0], O_CREAT | O_WRONLY | O_TRUNC, 0644);
                     dup2(fd, STDOUT_FILENO);
                     if(strcmp("history", args[0][0]) == 0){
-                        print_file_content("history.txt");
+                        print_file_content(history_file_path);
                         exit(1);
                     }
                     else{
@@ -218,7 +219,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                                 close(b[1]); /* Cerramos la escritura para el proceso hijo */
                                 dup2(a[1], STDOUT_FILENO);
                                 if(strcmp("history", args[0][0]) == 0){
-                                    print_file_content("history.txt");
+                                    print_file_content(history_file_path);
                                     exit(1);
                                 }
                                 else{
@@ -232,7 +233,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                     }
                     else{
                         if(strcmp("history", args[0][0]) == 0){
-                            print_file_content("history.txt");
+                            print_file_content(history_file_path);
                             exit(1);
                         }
                         else{
@@ -256,12 +257,14 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
 void main(){
     int should_run = 1, num_characters;
     size_t buffer_size = MAX_LINE;
+    getcwd(history_file_path, 500);
+    strcat(history_file_path, "/files/history.txt");
     while(should_run){
         char *args[MAX_COMMANDS][MAX_LINE/2 + 1];
         char *buffer;
         buffer = (char*)malloc(MAX_LINE * sizeof(char));
         buffer[0] = '\0';
-        printf("%s> ", getcwd(current_path, 200));
+        printf("%s> ", getcwd(current_path, 500));
         num_characters = getline(&buffer, &buffer_size, stdin);
         buffer[--num_characters] = '\0';
         if(strlen(buffer) == 0){
@@ -278,7 +281,7 @@ void main(){
             get_tokens(buffer, num_characters, args, &num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             //print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             if(!(strcmp("!!", buffer) == 0)){
-                write_command_in_history_file(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background, "history.txt");   
+                write_command_in_history_file(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background, history_file_path);   
             }
             execute(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
         }
