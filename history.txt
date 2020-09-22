@@ -19,3 +19,4 @@ ls
 ps aux > output.txt 
 ls > output.txt 
 ps aux > output.txt 
+ls 
