@@ -220,7 +220,6 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
             else{ /* Parent process */
                 if(!should_run_in_background[0]){
                     wait(NULL);
-                    sleep(1);
                 }
             }
         }
@@ -228,11 +227,11 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
 }
 
 void main(){
-    char *args[MAX_COMMANDS][MAX_LINE/2 + 1];
-    char *buffer;
     int should_run = 1, num_characters;
     size_t buffer_size = MAX_LINE;
     while(should_run){
+        char *args[MAX_COMMANDS][MAX_LINE/2 + 1];
+        char *buffer;
         buffer = (char*)malloc(MAX_LINE * sizeof(char));
         buffer[0] = '\0';
         printf("%s> ", getcwd(current_path, 200));
