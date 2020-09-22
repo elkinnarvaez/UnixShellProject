@@ -1,25 +1,39 @@
+ls 
+ls 
 ls -a 
-ls -a 
-ls -a 
+history 
 ls 
-ls 
-ls 
-ls 
-ls | grep main 
 ls -a 
 ls 
-ls > output.txt 
-ps aux > output.txt 
-ls > output.txt 
+ls 
+history 
+ls 
+history > output.txt 
 ls 
 ls > output.txt 
-ls > output.txt 
-ps aux > output.txt 
-ls > output.txt 
-ps aux 
-ps aux > output.txt 
 ls 
-ls > output.txt 
+history > output.txt 
+ls -a > output.txt 
+ls | gdgfd 
+ls -l 
+ls -l | Ãless 
+less output.txt 
+ls | less 
+ls | grep a 
+ls | less 
+history 
+history | grep - 
+history | grep - 
+ls | grep a 
+ls | sddsf 
+ls | fsd 
+ls | sdf 
+ls | sd 
+ls | sfdsdf 
+ls | dfs 
+ls | fds 
 ls -a 
-ks 
-ps aux | grep j 
+ls | grep a 
+history 
+history > output.txt 
+history | grep - 

@@ -123,6 +123,21 @@ void write_command_in_history_file(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int
     fclose(fp);
 }
 
+void print_file_content(char *file_name){
+   FILE *fp;
+   int c;
+
+   fp = fopen(file_name, "r");
+   while(1) {
+      c = fgetc(fp);
+      if(feof(fp)){
+         break;
+      }
+      printf("%c", c);
+   }
+   fclose(fp);
+}
+
 void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
     if(strcmp("cd", args[0][0]) == 0){
         if(chdir(args[0][1]) == -1){
@@ -145,9 +160,15 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                     mkfifo(args[1][0], 0666);
                     fd = open(args[1][0], O_RDWR | O_CREAT);
                     dup2(fd, STDOUT_FILENO);
-                    if(execvp(args[0][0], args[0]) < 0){
-                        printf("ERROR: exec failed\n");
+                    if(strcmp("history", args[0][0]) == 0){
+                        print_file_content("history.txt");
                         exit(1);
+                    }
+                    else{
+                        if(execvp(args[0][0], args[0]) < 0){
+                            printf("ERROR: exec failed\n");
+                            exit(1);
+                        }
                     }
                 }
                 else{
@@ -158,7 +179,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         }
                         else{
                             if(pid2 == 0){
-                                args[1][commands_args_size[1]] = "/tmp/process_output";
+                                args[1][commands_args_size[1]] = "/tmp/process_output.txt";
                                 args[1][commands_args_size[1] + 1] = NULL;
                                 if(execvp(args[1][0], args[1]) < 0){
                                     printf("ERROR: exec failed\n");
@@ -166,20 +187,32 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                                 }
                             }
                             else{
-                                mkfifo("/tmp/process_output", 0666);
-                                fd = open("/tmp/process_output", O_RDWR | O_CREAT);
+                                mkfifo("/tmp/process_output.txt", 0666);
+                                fd = open("/tmp/process_output.txt", O_RDWR | O_CREAT);
                                 dup2(fd, STDOUT_FILENO);
-                                if(execvp(args[0][0], args[0]) < 0){
-                                    printf("ERROR: exec failed\n");
+                                if(strcmp("history", args[0][0]) == 0){
+                                    print_file_content("history.txt");
                                     exit(1);
+                                }
+                                else{
+                                    if(execvp(args[0][0], args[0]) < 0){
+                                        printf("ERROR: exec failed\n");
+                                        exit(1);
+                                    }
                                 }
                             }
                         }
                     }
                     else{
-                        if(execvp(args[0][0], args[0]) < 0){
-                            printf("ERROR: exec failed\n");
+                        if(strcmp("history", args[0][0]) == 0){
+                            print_file_content("history.txt");
                             exit(1);
+                        }
+                        else{
+                            if(execvp(args[0][0], args[0]) < 0){
+                                printf("ERROR: exec failed\n");
+                                exit(1);
+                            }
                         }
                     }
                 }
@@ -187,6 +220,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
             else{ /* Parent process */
                 if(!should_run_in_background[0]){
                     wait(NULL);
+                    sleep(1);
                 }
             }
         }
