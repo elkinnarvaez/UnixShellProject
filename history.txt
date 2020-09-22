@@ -1,0 +1,25 @@
+ls -a 
+ls -a 
+ls -a 
+ls 
+ls 
+ls 
+ls 
+ls | grep main 
+ls -a 
+ls 
+ls > output.txt 
+ps aux > output.txt 
+ls > output.txt 
+ls 
+ls > output.txt 
+ls > output.txt 
+ps aux > output.txt 
+ls > output.txt 
+ps aux 
+ps aux > output.txt 
+ls 
+ls > output.txt 
+ls -a 
+ks 
+ps aux | grep j 

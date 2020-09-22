@@ -16,8 +16,6 @@ extern int errno;
 
 char current_path[200];
 
-char *command_output = "/tmp/command_output";
-
 void get_tokens(char *buffer, int num_characters, char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int *num_command, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
     int i = 0, j = 0;
     //int num_command = 0;
@@ -25,6 +23,7 @@ void get_tokens(char *buffer, int num_characters, char* args[MAX_COMMANDS][MAX_L
     while(i < num_characters){
         char* command;
         command = (char*)malloc(num_characters * sizeof(char));
+        command[0] = '\0';
         j = 0;
         while(i < num_characters && buffer[i] != ' '){
             command[j] = buffer[i];
@@ -35,6 +34,7 @@ void get_tokens(char *buffer, int num_characters, char* args[MAX_COMMANDS][MAX_L
         while(i < num_characters && buffer[i + 1] != '|' && buffer[i + 1] != '>' && buffer[i + 1] != '&'){
             char* param;
             param = (char*)malloc(num_characters * sizeof(char));
+            param[0] = '\0';
             i++;
             j = 0;
             while(i < num_characters && buffer[i] != ' '){
@@ -94,6 +94,35 @@ void print_tokens(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, in
     printf("\n");
 }
 
+void write_command_in_history_file(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
+    FILE *fp;
+    fp = fopen("history.txt", "a");
+    for(int i = 0; i < num_commands; i++){
+        for(int j = 0; j < commands_args_size[i]; j++){
+            //fprintf(fp, "%s ", args[i][j]);
+            fputs(args[i][j], fp);
+            fputs(" ", fp);
+        }
+        if(should_run_in_background[i]){
+            //fprintf(fp, "& ");
+            fputs("& ", fp);
+        }
+        if(i < num_commands - 1){
+            if(is_outbound_redirection[i]){
+                //fprintf(fp, "> ");
+                fputs("> ", fp);
+            }
+            else{
+                //fprintf(fp, "| ");
+                fputs("| ", fp);
+            }
+        }
+    }
+    //fprintf(fp, "\n");
+    fputs("\n", fp);
+    fclose(fp);
+}
+
 void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int commands_args_size[MAX_COMMANDS], int is_outbound_redirection[MAX_COMMANDS], int should_run_in_background[MAX_COMMANDS]){
     if(strcmp("cd", args[0][0]) == 0){
         if(chdir(args[0][1]) == -1){
@@ -101,7 +130,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
         }
     }
     else{
-        pid_t pid;
+        pid_t pid, pid2, fd;
         if((pid = fork()) < 0){
             fprintf(stderr, "ERROR: fork failed\n");
             exit(1);
@@ -114,7 +143,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         exit(1);
                     }
                     mkfifo(args[1][0], 0666);
-                    int fd = open(args[1][0], O_RDWR | O_CREAT);
+                    fd = open(args[1][0], O_RDWR | O_CREAT);
                     dup2(fd, STDOUT_FILENO);
                     if(execvp(args[0][0], args[0]) < 0){
                         printf("ERROR: exec failed\n");
@@ -123,7 +152,6 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                 }
                 else{
                     if(num_commands == 2){
-                        pid_t pid2;
                         if((pid2 = fork()) < 0){
                             fprintf(stderr, "ERROR: fork failed\n");
                             exit(1);
@@ -139,7 +167,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                             }
                             else{
                                 mkfifo("/tmp/process_output", 0666);
-                                int fd = open("/tmp/process_output", O_RDWR | O_CREAT);
+                                fd = open("/tmp/process_output", O_RDWR | O_CREAT);
                                 dup2(fd, STDOUT_FILENO);
                                 if(execvp(args[0][0], args[0]) < 0){
                                     printf("ERROR: exec failed\n");
@@ -168,10 +196,11 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
 void main(){
     char *args[MAX_COMMANDS][MAX_LINE/2 + 1];
     char *buffer;
-    buffer = (char*)malloc(MAX_LINE * sizeof(char));
     int should_run = 1, num_characters;
     size_t buffer_size = MAX_LINE;
     while(should_run){
+        buffer = (char*)malloc(MAX_LINE * sizeof(char));
+        buffer[0] = '\0';
         printf("%s> ", getcwd(current_path, 200));
         num_characters = getline(&buffer, &buffer_size, stdin);
         buffer[--num_characters] = '\0';
@@ -188,8 +217,8 @@ void main(){
             int should_run_in_background[MAX_COMMANDS] = {0};
             get_tokens(buffer, num_characters, args, &num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             //print_tokens(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
+            write_command_in_history_file(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
             execute(args, num_commands, commands_args_size, is_outbound_redirection, should_run_in_background);
-            //printf("%d\n", getppid());
         }
     }
 }
