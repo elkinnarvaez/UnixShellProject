@@ -182,6 +182,8 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
                         }
                         else{
                             if(pid2 == 0){
+                                close(a[1]); /* Cerramos la lectura para el proceso padre */
+                                close(b[0]); /* Cerramos la escritura para el proceso padre */
                                 dup2(a[0], STDIN_FILENO);
                                 if(execvp(args[1][0], args[1]) < 0){
                                     printf("ERROR: exec failed\n");
