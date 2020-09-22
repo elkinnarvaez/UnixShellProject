@@ -247,6 +247,7 @@ void execute(char* args[MAX_COMMANDS][MAX_LINE/2 + 1], int num_commands, int com
             }
             else{ /* Parent process */
                 if(!should_run_in_background[0]){
+                    usleep(100000);
                     wait(NULL);
                 }
             }
