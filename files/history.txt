@@ -1,0 +1,17 @@
+ls 
+cd .. 
+cd .. 
+cd Parcial\ 1 
+ls 
+ls 
+ls 
+ls 
+ls 
+cd 'Parcial 1' 
+ls 
+ls 
+ls 
+ls 
+ls 
+ls 
+ls -a 

@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include<errno.h>
+#include <errno.h>
 
 extern int errno;
 

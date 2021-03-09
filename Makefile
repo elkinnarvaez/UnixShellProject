@@ -6,4 +6,3 @@ test:
 	
 clean:
 	rm -f *.out
-    
